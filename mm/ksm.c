@@ -2403,7 +2403,7 @@ static void ksm_do_scan(unsigned int scan_npages)
 		cond_resched();
 		rmap_item = scan_get_next_rmap_item(&page);
 		
-    printk(KERN_DEBUG "[KSM] Scanning memory address : %u\n", rmap_item->address);
+    printk("[KSM] Scanning memory address : %lu\n", rmap_item->address);
 
     if (!rmap_item)
 			return;
