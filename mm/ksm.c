@@ -2402,7 +2402,10 @@ static void ksm_do_scan(unsigned int scan_npages)
 	while (scan_npages-- && likely(!freezing(current))) {
 		cond_resched();
 		rmap_item = scan_get_next_rmap_item(&page);
-		if (!rmap_item)
+		
+    printk(KERN_DEBUG "[KSM] Scanning memory address : %u\n", rmap_item->address);
+
+    if (!rmap_item)
 			return;
 		cmp_and_merge_page(page, rmap_item);
 		put_page(page);
