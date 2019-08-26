@@ -2399,12 +2399,12 @@ static void ksm_do_scan(unsigned int scan_npages)
 	struct rmap_item *rmap_item;
 	struct page *uninitialized_var(page);
 
+  printk(KERN_DEBUG "[KSM] Scanning N-Pages : %d", scan_npages);
+
 	while (scan_npages-- && likely(!freezing(current))) {
 		cond_resched();
 		rmap_item = scan_get_next_rmap_item(&page);
 		
-    printk("[KSM] Scanning memory address : %lu\n", rmap_item->address);
-
     if (!rmap_item)
 			return;
 		cmp_and_merge_page(page, rmap_item);
@@ -2418,8 +2418,10 @@ static int ksmd_should_run(void)
 }
 
 static int ksm_scan_thread(void *nothing)
-{
-	unsigned int sleep_ms;
+{ 
+  printk(KERN_DEBUG "[KSM] Starting KSM Daemon..\n");
+
+  unsigned int sleep_ms;
 
 	set_freezable();
 	set_user_nice(current, 5);
@@ -2427,9 +2429,11 @@ static int ksm_scan_thread(void *nothing)
 	while (!kthread_should_stop()) {
 		mutex_lock(&ksm_thread_mutex);
 		wait_while_offlining();
-		if (ksmd_should_run())
-			ksm_do_scan(ksm_thread_pages_to_scan);
-		mutex_unlock(&ksm_thread_mutex);
+		if (ksmd_should_run()) {
+      printk(KERN_DEBUG "[KSM] KSM Daemon will start scanning pages %d..\n", ksm_thread_pages_to_scan);
+      ksm_do_scan(ksm_thread_pages_to_scan);
+    }
+    mutex_unlock(&ksm_thread_mutex);
 
 		try_to_freeze();
 
@@ -3205,7 +3209,7 @@ static int __init ksm_init(void)
 		goto out;
 
 	ksm_thread = kthread_run(ksm_scan_thread, NULL, "ksmd");
-	if (IS_ERR(ksm_thread)) {
+  if (IS_ERR(ksm_thread)) {
 		pr_err("ksm: creating kthread failed\n");
 		err = PTR_ERR(ksm_thread);
 		goto out_free;
