@@ -2061,6 +2061,8 @@ static void cmp_and_merge_page(struct page *page, struct rmap_item *rmap_item)
 	int err;
 	bool max_page_sharing_bypass = false;
 
+  printk(KERN_DEBUG "[KSM] Comparing page %p and rmap_item %d\n", kmap_atomic(page), rmap_item->address);
+
 	stable_node = page_stable_node(page);
 	if (stable_node) {
 		if (stable_node->head != &migrate_nodes &&
@@ -2399,7 +2401,10 @@ static void ksm_do_scan(unsigned int scan_npages)
 	struct rmap_item *rmap_item;
 	struct page *uninitialized_var(page);
 
-  printk(KERN_DEBUG "[KSM] Scanning N-Pages : %d", scan_npages);
+  // @rayandrew
+  // if we print something in this, it will be printed as many 
+  // as the process that run the ksm
+  // printk(KERN_DEBUG "[KSM] Scanning N-Pages : %d\n", scan_npages);
 
 	while (scan_npages-- && likely(!freezing(current))) {
 		cond_resched();
@@ -2419,6 +2424,8 @@ static int ksmd_should_run(void)
 
 static int ksm_scan_thread(void *nothing)
 { 
+  // @rayandrew
+  // this is the starting point of ksm daemon
   printk(KERN_DEBUG "[KSM] Starting KSM Daemon..\n");
 
   unsigned int sleep_ms;
@@ -2430,7 +2437,10 @@ static int ksm_scan_thread(void *nothing)
 		mutex_lock(&ksm_thread_mutex);
 		wait_while_offlining();
 		if (ksmd_should_run()) {
-      printk(KERN_DEBUG "[KSM] KSM Daemon will start scanning pages %d..\n", ksm_thread_pages_to_scan);
+      // @rayandrew
+      // so here is the starting point the thread start scanning
+      // it will call the ksm_do_scan() function 
+      printk(KERN_DEBUG "[KSM] Daemon will start scanning pages %d..\n", ksm_thread_pages_to_scan);
       ksm_do_scan(ksm_thread_pages_to_scan);
     }
     mutex_unlock(&ksm_thread_mutex);
@@ -2450,6 +2460,14 @@ static int ksm_scan_thread(void *nothing)
 	return 0;
 }
 
+/** @rayandrew
+  * so here is the initial call of madvise(2)
+  * int madvise(void *addr, size_t length, int advice);
+  *
+  * vma == virtual memory area = contiguous range of virtual address
+  * these areas never overlap
+  * 
+  */
 int ksm_madvise(struct vm_area_struct *vma, unsigned long start,
 		unsigned long end, int advice, unsigned long *vm_flags)
 {
